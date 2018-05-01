@@ -70,4 +70,6 @@ Route::group(['prefix' => 'order', 'as' => 'order.', 'middleware' => 'level'], f
     Route::post('/store', 'OrderController@store')->name('store');
     Route::delete('/destroy', 'OrderController@destroy')->name('destroy');
 });
+
+Route::resource('/bills', 'BillController')->middleware('level');
 Auth::routes();

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Bill;
 use App\Book;
 use App\Cart;
+use App\Employee;
 use App\Order;
 use App\Order_item;
 use App\User;
@@ -61,30 +62,42 @@ class OrderController extends Controller
         return view('order.showOptionOrder', compact('orders'));
     }
 
-    public function index(Request $request)
-    {
-//        session()->flush();
-        $request->session()->put('search', $request
+    public function addSession(Request $request) {
+        //        session()->flush();
+        $check = ['id', 'user_id', 'name', 'phone', 'email', 'address', 'created_at', 'updated_at'];
+        if(session()->has('field') && !in_array(session()->get('field'), $check)) session()->forget('field');
+        if(session()->has('search') && !in_array(session()->get('search'), $check)) session()->forget('search');
+
+        $request->session()->flash('search', $request
             ->has('search') ? $request->get('search') : ($request->session()
             ->has('search') ? $request->session()->get('search') : ''));
 
-        $request->session()->put('field', $request
+        $request->session()->flash('field', $request
             ->has('field') ? $request->get('field') : ($request->session()
             ->has('field') ? $request->session()->get('field') : 'updated_at'));
 
-        $request->session()->put('sort', $request
+        $request->session()->flash('sort', $request
             ->has('sort') ? $request->get('sort') : ($request->session()
             ->has('sort') ? $request->session()->get('sort') : 'asc'));
+    }
+
+    public function index(Request $request)
+    {
+        $this->addSession($request);
 
 //        $orders = new Order();
-        $orders = Order::with('order_items')->where('name', 'like', '%'.$request->session()->get('search').'%')
+        $orders = Order::with('order_items')->whereNotIn('orders.id', Bill::where('was_paid', '=', '1')->pluck('order_id'))
+            ->where('name', 'like', '%'.$request->session()->get('search').'%')
             ->orderBy($request->session()->get('field'), $request->session()->get('sort'))->paginate(5);
         $page = $orders->currentPage();
 //        return $orders;
+
+        $employees = Employee::with('user')->where('position_id', '=', '3')->orderBy('employee_code')->get();
+//        return $employees;
         if($request->ajax()) {
-            return view('order.index', compact('orders', 'page'));
+            return view('order.index', compact('orders', 'page', 'employees'));
         }else {
-            return view('order.ajax', compact('orders', 'page'));
+            return view('order.ajax', compact('orders', 'page', 'employees'));
         }
     }
 
@@ -139,6 +152,7 @@ class OrderController extends Controller
 //            }
 //            Cart::where('user_id', '=', $user->id)->delete();
 //        });
+        DB::beginTransaction();
         try{
             $order = new Order();
             $order->user_id = $user->id;
@@ -147,7 +161,7 @@ class OrderController extends Controller
             $order->email = $user->email;
             $order->address = $request->address;
             $order->save();
-            $order->orderItems()->saveMany($items);
+            $order->order_items()->saveMany($items);
             foreach ($items as $item) {
                 $book = Book::where('book_code', '=', $item->book_code)->first();
                 $book->quantity -= $item->quantity;
@@ -156,11 +170,12 @@ class OrderController extends Controller
             Cart::where('user_id', '=', $user->id)->delete();
             DB::commit();
         }catch (\Exception $e) {
-            DB::rollback();
-            return $e;
+            DB::rollBack();
+            session()->flash('message', $e);
+            return redirect()->route('cart.index');
         }
         session()->flash('message', 'Thêm đơn hàng thành công!');
-        return redirect()->route('index');
+        return redirect()->route('user.order');
     }
 
     /**
@@ -205,9 +220,10 @@ class OrderController extends Controller
      */
     public function destroy(Request $request)
     {
+        DB::beginTransaction();
         try {
             $order = Order::find($request->id);
-            $items = $order->orderItems;
+            $items = $order->order_items;
             foreach ($items as $item) {
                 $book = Book::where('book_code', '=', $item->book_code)->first();
                 $book->quantity += $item->quantity;
@@ -219,7 +235,7 @@ class OrderController extends Controller
 //            session()->flash('page', '/user/order');
             return redirect()->route('user.showOrder');
         }catch (\Exception $e) {
-            DB::rollback();
+            DB::rollBack();
             return $e;
         }
     }

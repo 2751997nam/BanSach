@@ -10,29 +10,29 @@ use Mockery\Exception;
 
 class BookController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index(Request $request)
-    {
-//        session()->put('field', 'updated_at');
-//        session()->flush();
+    public function addSession(Request $request) {
+        //        session()->flush();
+        $check = ['id', 'book_code', 'name', 'price', 'author', 'publisher', 'quantity', 'discount', 'created_at', 'updated_at'];
+        if(session()->has('field') && in_array(session()->get('field'), $check)) session()->forget('field');
+        if(session()->has('search') && in_array(session()->get('search'), $check)) session()->forget('search');
 
-//        return session()->all();
-        $request->session()->put('search', $request
+        $request->session()->flash('search', $request
             ->has('search') ? $request->get('search') : ($request->session()
             ->has('search') ? $request->session()->get('search') : ''));
 
-        $request->session()->put('field', $request
+        $request->session()->flash('field', $request
             ->has('field') ? $request->get('field') : ($request->session()
             ->has('field') ? $request->session()->get('field') : 'updated_at'));
 
-        $request->session()->put('sort', $request
+        $request->session()->flash('sort', $request
             ->has('sort') ? $request->get('sort') : ($request->session()
             ->has('sort') ? $request->session()->get('sort') : 'asc'));
+    }
 
+
+    public function index(Request $request)
+    {
+        $this->addSession($request);
         $books = new Book();
         $books = $books->where('name', 'like', '%'.$request->session()->get('search').'%')
         ->orderBy($request->session()->get('field'), $request->session()->get('sort'))->paginate(5);

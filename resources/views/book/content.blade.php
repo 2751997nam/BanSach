@@ -65,7 +65,7 @@
                     </td>
 
                     <td style="overflow: hidden">{{ $book->author }}</td>
-                    <td  style="overflow: hidden">{{ $book->description }}</td>
+                    <td  style="overflow: hidden">{{ strlen($book->description) > 150 ? substr($book->description, 0, 150)."..." : $book->description }}</td>
                     <td style="overflow: hidden">{{ $book->publisher }}</td>
                     <td style="overflow: hidden">{{ $book->price }}</td>
                     <td style="overflow: hidden">{{ $book->discount }}</td>

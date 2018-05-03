@@ -14,26 +14,31 @@ use Mockery\Exception;
 
 class EmployeesController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index(Request $request)
-    {
-//        session()->flush();
-        $request->session()->put('search', $request
+
+    public function addSession(Request $request) {
+        //        session()->flush();
+        $check = ['id', 'employee_code', 'fullname', 'dob', 'email', 'salary_level', 'position', 'created_at', 'updated_at'];
+        if(session()->has('field') && !in_array(session()->get('field'), $check)) session()->forget('field');
+        if(session()->has('search') && !in_array(session()->get('search'), $check)) session()->forget('search');
+
+        $request->session()->flash('search', $request
             ->has('search') ? $request->get('search') : ($request->session()
             ->has('search') ? $request->session()->get('search') : ''));
 
-        $request->session()->put('field', $request
+        $request->session()->flash('field', $request
             ->has('field') ? $request->get('field') : ($request->session()
             ->has('field') ? $request->session()->get('field') : 'updated_at'));
 
-        $request->session()->put('sort', $request
+        $request->session()->flash('sort', $request
             ->has('sort') ? $request->get('sort') : ($request->session()
-            ->has('sort') ? $request->session()->get('sort') : 'desc'));
+            ->has('sort') ? $request->session()->get('sort') : 'asc'));
+    }
 
+
+    public function index(Request $request)
+    {
+        $this->addSession($request);
+//        return session()->all();
         $employees = DB::table('users')->join('employees', 'users.id', '=', 'employees.id')
             ->join('positions', 'employees.position_id', '=', 'positions.id')
             ->select('users.id', 'users.name as fullname',

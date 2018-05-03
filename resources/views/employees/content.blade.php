@@ -18,7 +18,6 @@
             </th>
 
             <th style="vertical-align: middle; width: 250px">Email</th>
-            <th style="vertical-align: middle; width: 150px">Phone Number</th>
 
             <th style="vertical-align: middle; width: 150px"><a class="ajaxlink" href="javascript:ajaxLoad('{{ url('employees?field=dob&sort='.(request()->session()->get('sort')=='asc'?'desc':'asc')) }}')">Date of birth</a>
                 {{ request()->session()->get('field')=='dob'?(request()->session()->get('sort')=='asc'?'▴':'▾'):'' }}

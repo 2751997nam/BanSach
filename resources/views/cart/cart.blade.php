@@ -3,6 +3,30 @@
 @section('title', 'Giỏ Hàng')
 
 @section('content')
+    @if(session()->has('message'))
+        <script>
+            $(document).ready(function () {
+                alert("{{ session()->get('message') }}");
+            });
+
+        </script>
+    @endif
+    @if($errors->has('phone'))
+        <script>
+            $(document).ready(function () {
+                alert("{{ $errors->first('phone') }}")
+            });
+        </script>
+    @endif
+
+    @if($errors->has('address'))
+        <script>
+            $(document).ready(function () {
+                alert("{{ $errors->first('address') }}")
+            });
+        </script>
+    @endif
+
     <div style="background-color: white">
     <table class="table" style="background-color: white">
         <thead>
@@ -52,10 +76,40 @@
         <div class="checkout-info" style="float: right; background-color: white">
             <span>Tổng Tiền Hàng</span><span id="sumProduct"></span>
             <strong id="sumMoney" style="margin-left: 15px; color: orangered; font-size: 25px; margin-right: 15px"></strong>
-            <button class="btn" style="background-color: orangered; color: white" onclick="window.location.href='{{route('order.create')}}'">Thanh Toán</button>
+            <button class="btn" style="background-color: orangered; color: white" type="button" data-toggle="modal" data-target="#checkout">Thanh Toán</button>
         </div>
     </div>
     @endif
+    </div>
+
+    <div class="modal fade" id="checkout" tabindex="-1" role="dialog" aria-labelledby="checkoutLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="checkoutTitle">Vui Lòng Nhập Các Thông Tin Dưới Đây</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form action="{{ route('order.store') }}" method="POST" id="storeOrder">
+                        {{ csrf_field() }}
+                        <div class="form-group">
+                            <label for="address">Địa Chỉ Giao Hàng:</label>
+                            <input maxlength="500" type="text" name="address" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="phone">Số Điện Thoại:</label>
+                            <input type="text" name="phone"  maxlength="15" class="form-control" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="javascript:document.getElementById('storeOrder').submit()">Thanh Toán</button>
+                </div>
+            </div>
+        </div>
     </div>
 @endsection
 

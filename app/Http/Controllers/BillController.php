@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Bill;
+use App\Book;
+use App\Order;
 use App\Order_item;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -10,27 +12,31 @@ use function PHPSTORM_META\type;
 
 class BillController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index(Request $request)
-    {
-        $request->session()->put('search', $request
+
+
+    public function addSession(Request $request) {
+        //        session()->flush();
+        $check = ['id', 'bill_code', 'employee_code', 'order_id', 'was_paid', 'total', 'created_at', 'updated_at'];
+        if(session()->has('field') && !in_array(session()->get('field'), $check)) session()->forget('field');
+        if(session()->has('search') && !in_array(session()->get('search'), $check)) session()->forget('search');
+
+        $request->session()->flash('search', $request
             ->has('search') ? $request->get('search') : ($request->session()
             ->has('search') ? $request->session()->get('search') : ''));
 
-        $request->session()->put('field', $request
+        $request->session()->flash('field', $request
             ->has('field') ? $request->get('field') : ($request->session()
             ->has('field') ? $request->session()->get('field') : 'updated_at'));
 
-        $request->session()->put('sort', $request
+        $request->session()->flash('sort', $request
             ->has('sort') ? $request->get('sort') : ($request->session()
             ->has('sort') ? $request->session()->get('sort') : 'asc'));
+    }
 
 
-
+    public function index(Request $request)
+    {
+        $this->addSession($request);
 
         $bills = new Bill();
 //        $orders = Order_item::select('order_id', 'SUM(order_items.price * order_items.quantity * (100 - order_items.discount) / 100) as total'
@@ -48,7 +54,6 @@ class BillController extends Controller
 //        return $bills;
 
         $page = $bills->currentPage();
-
         if($request->ajax()) {
             return view('bill.index', compact('bills', 'page'));
         }else {
@@ -74,7 +79,19 @@ class BillController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $this->validate($request, [
+            'employee_code' => 'required',
+            'order_id' => 'required'
+        ]);
+
+        $bill = new Bill();
+        $b = Bill::orderBy('id', 'desc')->first();
+        $b = (int) $b->id + 1;
+        $bill->bill_code = $b < 10 ? "B00000".$b : ($b < 100 ? "B0000".$b : ($b < 1000 ? "B000".$b : ($b < 10000 ? "B00".$b : ($b < 100000 ? "B0".$b : "B".$b))));
+        $bill->employee_code = $request->employee_code;
+        $bill->order_id = $request->order_id;
+        $bill->was_paid = 0;
+        $bill->save();
     }
 
     /**
@@ -108,7 +125,13 @@ class BillController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        $this->validate($request, [
+            'was_paid' => 'numeric'
+        ]);
+
+        $bill = Bill::find($id);
+        $bill->was_paid = $request->was_paid;
+        $bill->save();
     }
 
     /**
@@ -119,6 +142,26 @@ class BillController extends Controller
      */
     public function destroy($id)
     {
-        //
+        $bill = Bill::find($id);
+        DB::beginTransaction();
+        try {
+            $order = Order::find($bill->order_id);
+            $items = $order->order_items;
+            foreach ($items as $item) {
+                if($bill->was_paid == 0) {
+                    $book = Book::where('book_code', '=', $item->book_code)->first();
+                    $book->quantity += $item->quantity;
+                    $book->save();
+                }
+                Order_item::destroy($item->id);
+            }
+            Order::destroy($bill->order_id);
+            Bill::destroy($id);
+            DB::commit();
+        }catch (\Exception $e) {
+            DB::rollBack();
+            return $e;
+        }
+        return redirect('bills');
     }
 }

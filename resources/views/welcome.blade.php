@@ -13,14 +13,7 @@
 @endsection
 
 @section('script')
-    @if(session()->has('message'))
-        <script>
-            $(document).ready(function () {
-                alert("{{ session()->get('message') }}");
-            });
 
-        </script>
-    @endif
     <script>
         $('a.like').click(function () {
             var a = $(this).children("input[name='likes']").val();

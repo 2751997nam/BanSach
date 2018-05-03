@@ -136,7 +136,6 @@
             </div>
         </div>
     </div>
-
     <input type="hidden" id="cartSize" value="">
 @endsection
 

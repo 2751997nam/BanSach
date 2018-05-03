@@ -2,7 +2,7 @@
 <div class="container">
     <div class="row">
         <div class="col-md-7">
-            Quản Lý Hoá Đơn
+            Quản Lý Đơn Hàng
         </div>
         @include('order.search')
     </div>
@@ -10,8 +10,8 @@
         <thead>
         <tr>
             <th  style="vertical-align: middle; width: 50px; ">STT</th>
-            <th style="vertical-align: middle; width: 100px"><a class="ajaxlink" href="javascript:ajaxLoad('{{ url('order?field=order_code&sort='.(request()->session()->get('sort')=='asc'?'desc':'asc')) }}')">User Id</a>
-                {{ request()->session()->get('field')=='order_code'?(request()->session()->get('sort')=='asc'?'▴':'▾'):'' }}
+            <th style="vertical-align: middle; width: 100px"><a class="ajaxlink" href="javascript:ajaxLoad('{{ url('order?field=user_id&sort='.(request()->session()->get('sort')=='asc'?'desc':'asc')) }}')">User Id</a>
+                {{ request()->session()->get('field')=='user_id'?(request()->session()->get('sort')=='asc'?'▴':'▾'):'' }}
             </th>
             <th style="vertical-align: middle; width: 150px"><a class="ajaxlink" href="javascript:ajaxLoad('{{ url('order?field=name&sort='.(request()->session()->get('sort')=='asc'?'desc':'asc')) }}')">Name</a>
                 {{ request()->session()->get('field')=='name'?(request()->session()->get('sort')=='asc'?'▴':'▾'):'' }}
@@ -50,10 +50,14 @@
                     <a class="btn btn-primary btn-xs detail" role="button" title="Details"
                        href="javascript:void(0)">
                         Details</a>
-                    <a class="btn btn-warning btn-xs create-bill" title="Create Bill"
-                       href="javascript:if(confirm('Are you sure want to create bill?')) void(0)">
+                    @if( $order->bill === null )
+                    <button class="btn btn-warning btn-xs create-bill" role="button" title="Create Bill"
+                       data-toggle="modal" data-target="#createBillModal" >
                         Create Bill
-                    </a>
+                    </button>
+                    @endif
+                    <button class="btn btn-danger btn-xs cancel-order" title="Cancel Order">Cancel</button>
+                    <input type="hidden" value="{{ $order->id }}" class="orderIdInput">
                 </td>
             </tr>
             <tr class="orderDetails" style="display: none;">
@@ -109,6 +113,37 @@
         </tbody>
     </table>
 
+    <!-- Modal -->
+    <div class="modal fade" id="createBillModal" tabindex="-1" role="dialog" aria-labelledby="createBillModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="createBillModalLabel">Choose Transpot Employee</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group row required">
+                        {{ Form::label("employee_code", "Employee", ['class' => 'col-md-3']) }}
+                        <div class="col-md-5">
+                            <select name="employee_code" class="form-control" id="selectEmployee">
+                                @foreach($employees as $employee)
+                                    <option value="{{ $employee->employee_code }}">
+                                        {{ $employee->employee_code . "   " . $employee->user->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="createBill" data-dismiss="modal">Create</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <ul class="paginate">
         {{ $orders->links() }}
     </ul>

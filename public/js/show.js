@@ -49,10 +49,10 @@ function bookDetailOption(element, page) {
 }
 
 function addToCart(user_id, book_id, url, bookQuantity, token) {
-    console.log(user_id);
-    console.log(book_id);
-    console.log(url);
-    console.log(token);
+    // console.log(user_id);
+    // console.log(book_id);
+    // console.log(url);
+    // console.log(token);
     // $("#addToCart").unbind('click');
     $('#addToCart').prop('disabled', true);
     var a = parseInt($("#cartSize").val());

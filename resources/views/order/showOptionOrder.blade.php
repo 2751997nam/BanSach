@@ -43,7 +43,7 @@
             <tbody>
             @php($i =  1)
             @php($sum = 0)
-            @foreach($order->orderItems as $item)
+            @foreach($order->order_items as $item)
                 <tr>
                     <td>{{ $i++ }}</td>
                     <td>{{ $item->name }}</td>

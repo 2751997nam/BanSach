@@ -23,6 +23,8 @@
 @include('footer')
 
 <script src="{{ asset('bootstrap/js/bootstrap.js') }}"></script>
+
 @yield('script')
+
 </body>
 </html>

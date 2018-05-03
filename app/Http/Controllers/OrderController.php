@@ -61,9 +61,31 @@ class OrderController extends Controller
         return view('order.showOptionOrder', compact('orders'));
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        //
+//        session()->flush();
+        $request->session()->put('search', $request
+            ->has('search') ? $request->get('search') : ($request->session()
+            ->has('search') ? $request->session()->get('search') : ''));
+
+        $request->session()->put('field', $request
+            ->has('field') ? $request->get('field') : ($request->session()
+            ->has('field') ? $request->session()->get('field') : 'updated_at'));
+
+        $request->session()->put('sort', $request
+            ->has('sort') ? $request->get('sort') : ($request->session()
+            ->has('sort') ? $request->session()->get('sort') : 'asc'));
+
+//        $orders = new Order();
+        $orders = Order::with('order_items')->where('name', 'like', '%'.$request->session()->get('search').'%')
+            ->orderBy($request->session()->get('field'), $request->session()->get('sort'))->paginate(5);
+        $page = $orders->currentPage();
+//        return $orders;
+        if($request->ajax()) {
+            return view('order.index', compact('orders', 'page'));
+        }else {
+            return view('order.ajax', compact('orders', 'page'));
+        }
     }
 
     /**
